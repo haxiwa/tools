@@ -1,4 +1,4 @@
-package haxiwa
+package tools
 
 import (
 	"fmt"
