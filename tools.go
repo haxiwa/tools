@@ -17,7 +17,7 @@ const banner = `
   ___ ___               .__                 
  /   |   \_____  ___  __|__|_  _  _______   
 /    ~    \__  \ \  \/  /  \ \/ \/ /\__  \  
-\    Y    // __ \_>    <|  |\     /  / __ \_
+\    H    // __ \_>    <|  |\     /  / __ \_
  \___|_  /(____  /__/\_ \__| \/\_/  (____  /
        \/      \/      \/                \/ 
 
@@ -167,7 +167,7 @@ func IsDigit(data string) bool {
 }
 
 //================================================================================
-//Get string between a and b in c
+//Get string between a and b in c.
 func Between(str, starting, ending string) string {
 	s := strings.Index(str, starting)
 	if s < 0 {
