@@ -1,12 +1,16 @@
 package tools
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/binary"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"math/rand"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,7 +28,7 @@ const banner = `
 `
 
 //================================================================================
-// show cmd banner
+// show cmd bannerti
 func ShowBanner() {
 	fmt.Println(banner)
 }
@@ -182,7 +186,58 @@ func Between(str, starting, ending string) string {
 }
 
 //================================================================================
+func Readtxt(filepath string) []string {
+	f, err := os.Open(filepath)
+	if err != nil {
+		fmt.Println("os Open error: ", err)
+		return nil
+	}
+	defer f.Close()
+
+	br := bufio.NewReader(f)
+	var strlist []string
+	for {
+		line, _, err := br.ReadLine()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			fmt.Println("br ReadLine error: ", err)
+			return nil
+		}
+		strlist = append(strlist, string(line))
+
+	}
+	return strlist
+}
+
 //================================================================================
+//ip到数字
+func ip2Long(ip string) uint32 {
+	var long uint32
+	binary.Read(bytes.NewBuffer(net.ParseIP(ip).To4()), binary.BigEndian, &long)
+	return long
+}
+
+//数字到IP
+func backtoIP4(ipInt int64) string {
+	// need to do two bit shifting and “0xff” masking
+	b0 := strconv.FormatInt((ipInt>>24)&0xff, 10)
+	b1 := strconv.FormatInt((ipInt>>16)&0xff, 10)
+	b2 := strconv.FormatInt((ipInt>>8)&0xff, 10)
+	b3 := strconv.FormatInt((ipInt & 0xff), 10)
+	return b0 + "." + b1 + "." + b2 + "." + b3
+}
+func Ip2list(addr1, addr2 string) []string {
+	var iplist []string
+	ip1 := ip2Long(addr1)
+	ip2 := ip2Long(addr2)
+	for i := ip1; i <= ip2; i++ {
+		i := int64(i)
+		iplist = append(iplist, backtoIP4(i))
+	}
+	return iplist
+}
+
 //================================================================================
 //================================================================================
 //================================================================================
