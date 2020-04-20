@@ -28,7 +28,7 @@ const banner = `
 `
 
 //================================================================================
-// show cmd bannerti
+// show cmd banner
 func ShowBanner() {
 	fmt.Println(banner)
 }
@@ -60,8 +60,8 @@ func Hosts(cidr string) ([]string, error) {
 //================================================================================
 //router
 type Pool struct {
-	queue chan int
-	wg    *sync.WaitGroup
+	Queue chan int
+	Wg    *sync.WaitGroup
 }
 
 func NewPool(cap, total int) *Pool {
@@ -69,20 +69,20 @@ func NewPool(cap, total int) *Pool {
 		cap = 1
 	}
 	p := &Pool{
-		queue: make(chan int, cap),
-		wg:    new(sync.WaitGroup),
+		Queue: make(chan int, cap),
+		Wg:    new(sync.WaitGroup),
 	}
-	p.wg.Add(total)
+	p.Wg.Add(total)
 	return p
 }
 
 func (p *Pool) AddOne() {
-	p.queue <- 1
+	p.Queue <- 1
 }
 
 func (p *Pool) DelOne() {
-	<-p.queue
-	p.wg.Done()
+	<-p.Queue
+	p.Wg.Done()
 }
 
 //================================================================================
