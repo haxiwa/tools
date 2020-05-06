@@ -3,17 +3,23 @@ package tools
 import (
 	"bufio"
 	"bytes"
+	"crypto/rand"
 	"encoding/binary"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
-	"math/rand"
+	"io/ioutil"
+	"math/big"
 	"net"
+	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 )
 
 const banner = `
@@ -137,14 +143,17 @@ func Save_txt_cover(content, filepath string) {
 }
 
 //================================================================================
-func Randomstring(n int) string {
-	var letters = []byte("qwrtyuioplkjhgfdsazxcvbnmQWERTYUIOPLKJHGFDSAZXCVBNM")
-	result := make([]byte, n)
-	rand.Seed(time.Now().Unix())
-	for i := range result {
-		result[i] = letters[rand.Intn(n)]
+func RandomString(len int) string {
+	var container string
+	var str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+	b := bytes.NewBufferString(str)
+	length := b.Len()
+	bigInt := big.NewInt(int64(length))
+	for i := 0; i < len; i++ {
+		randomInt, _ := rand.Int(rand.Reader, bigInt)
+		container += string(str[randomInt.Int64()])
 	}
-	return string(result)
+	return container
 }
 
 //================================================================================
@@ -254,7 +263,55 @@ func WaitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 }
 
 //================================================================================
+func DeleteExtraSpace(s string) string {
+	//删除字符串中的多余空格，有多个空格时，仅保留一个空格
+	s1 := strings.Replace(s, "  ", " ", -1)      //替换tab为空格
+	regstr := "\\s{2,}"                          //两个及两个以上空格的正则表达式
+	reg, _ := regexp.Compile(regstr)             //编译正则表达式
+	s2 := make([]byte, len(s1))                  //定义字符数组切片
+	copy(s2, s1)                                 //将字符串复制到切片
+	spc_index := reg.FindStringIndex(string(s2)) //在字符串中搜索
+	for len(spc_index) > 0 {                     //找到适配项
+		s2 = append(s2[:spc_index[0]+1], s2[spc_index[1]:]...) //删除多余空格
+		spc_index = reg.FindStringIndex(string(s2))            //继续在字符串中搜索
+	}
+	return string(s2)
+}
+
 //================================================================================
+func Post_json(url string, header map[string]string, song map[string]interface{}) string {
+
+	bytesData, err := json.Marshal(song)
+	if err != nil {
+		fmt.Println(err.Error())
+		return "0"
+	}
+	reader := bytes.NewReader(bytesData)
+	request, err := http.NewRequest("POST", url, reader)
+	if err != nil {
+		fmt.Println(err.Error())
+		return "0"
+	}
+	for k, v := range header {
+		request.Header.Set(k, v)
+	}
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+	client := http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		fmt.Println(err.Error())
+		return "0"
+	}
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err.Error())
+		return "0"
+	}
+	//byte数组直接转成string，优化内存
+	str := (*string)(unsafe.Pointer(&respBytes))
+	return *str
+}
+
 //================================================================================
 //================================================================================
 //================================================================================
