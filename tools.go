@@ -4,7 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/csv"
 	"encoding/json"
@@ -421,8 +424,53 @@ func Unicode2Gbk(ustr string) string {
 }
 
 //================================================================================
+func GetHmacSha256(message, secretKey string) string {
+	key := []byte(secretKey)
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(message))
+	//	fmt.Println(h.Sum(nil))
+	sha := h.Sum(nil)
+	return base64.StdEncoding.EncodeToString([]byte(sha))
+}
+
 //================================================================================
+func CheckMac(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	if (a == nil) != (b == nil) {
+		return false
+	}
+
+	for key, value := range a {
+		if value != b[key] {
+			return false
+		}
+	}
+
+	return true
+}
+
 //================================================================================
+func GetMacAddrs() (macAddrs []string) {
+	netInterfaces, err := net.Interfaces()
+	if err != nil {
+		fmt.Printf("fail to get net interfaces: %v", err)
+		return macAddrs
+	}
+
+	for _, netInterface := range netInterfaces {
+		macAddr := netInterface.HardwareAddr.String()
+		if len(macAddr) == 0 {
+			continue
+		}
+
+		macAddrs = append(macAddrs, macAddr)
+	}
+	return macAddrs
+}
+
 //================================================================================
 //================================================================================
 //================================================================================
